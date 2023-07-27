@@ -21,7 +21,7 @@ from nemo_text_processing.inverse_text_normalization.jp.taggers.cardinal import 
 from nemo_text_processing.inverse_text_normalization.jp.taggers.punctuation import PunctuationFst
 from nemo_text_processing.inverse_text_normalization.jp.taggers.whitelist import WhiteListFst
 from nemo_text_processing.inverse_text_normalization.jp.taggers.word import WordFst
-from nemo_text_processing.text_normalization.en.graph_utils import (
+from nemo_text_processing.inverse_text_normalization.jp.graph_utils import (
     INPUT_LOWER_CASED,
     GraphFst,
     delete_extra_space,
@@ -62,7 +62,7 @@ class ClassifyFst(GraphFst):
             logging.info(f"ClassifyFst.fst was restored from {far_file}.")
         else:
             logging.info(f"Creating ClassifyFst grammars.")
-            cardinal = CardinalFst(input_case=input_case)
+            cardinal = CardinalFst()
             cardinal_graph = cardinal.fst
 
             

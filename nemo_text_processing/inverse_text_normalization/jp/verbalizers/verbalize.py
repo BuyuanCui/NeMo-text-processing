@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from nemo_text_processing.inverse_text_normalization.en.verbalizers.cardinal import CardinalFst
-from nemo_text_processing.inverse_text_normalization.en.verbalizers.whitelist import WhiteListFst
-from nemo_text_processing.text_normalization.en.graph_utils import GraphFst
+from nemo_text_processing.inverse_text_normalization.jp.verbalizers.cardinal import CardinalFst
+from nemo_text_processing.inverse_text_normalization.jp.verbalizers.whitelist import WhiteListFst
+from nemo_text_processing.inverse_text_normalization.jp.graph_utils import GraphFst
 
 
 class VerbalizeFst(GraphFst):

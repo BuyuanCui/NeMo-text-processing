@@ -11,24 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 import pynini
-from nemo_text_processing.inverse_text_normalization.jp.graph_utils import GraphFst
+from nemo_text_processing.text_normalization.en.graph_utils import NEMO_NOT_QUOTE, GraphFst
 from pynini.lib import pynutil
 
 
-class PunctuationFst(GraphFst):
-    """
-    Finite state transducer for classifying punctuation
-        e.g. a, -> tokens { name: "a" } tokens { name: "," }
-    """
+class WhiteListFst(GraphFst):
+    '''
+        tokens { whitelist: "ATM" } -> A T M
+    '''
 
-    def __init__(self):
-        super().__init__(name="punctuation", kind="classify")
-
-        s = "!#$%&'()*+,-./:;<=>?@^_`{|}~。，；：《》“”·~【】！？、‘’.<>-——_、。.「」『』‘`／・；’”“”‷･〔〕々〃ゝゞヽ〲〱〳〴〵ヾ〆，"
-        punct = pynini.union(*s)
-
-        graph = pynutil.insert('name: "') + punct + pynutil.insert('"')
-
+    def __init__(self, deterministic: bool = True, lm: bool = False):
+        super().__init__(name="whitelist", kind="verbalize", deterministic=deterministic)
+        remove_erhua = pynutil.delete("erhua: \"") + pynutil.delete("儿") + pynutil.delete("\"")
+        whitelist = pynutil.delete("name: \"") + pynini.closure(NEMO_NOT_QUOTE) + pynutil.delete("\"")
+        graph = remove_erhua | whitelist
         self.fst = graph.optimize()

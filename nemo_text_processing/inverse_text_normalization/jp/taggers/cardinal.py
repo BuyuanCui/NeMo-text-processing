@@ -14,8 +14,8 @@
 
 
 import pynini
-from nemo_text_processing.inverse_text_normalization.en.utils import get_abs_path
-from nemo_text_processing.text_normalization.en.graph_utils import NEMO_DIGIT, GraphFst
+from nemo_text_processing.inverse_text_normalization.jp.utils import get_abs_path
+from nemo_text_processing.inverse_text_normalization.jp.graph_utils import NEMO_DIGIT, GraphFst
 from pynini.lib import pynutil
 
 
@@ -23,7 +23,7 @@ class CardinalFst(GraphFst):
     """
     Finite state transducer for classifying cardinals
         e.g. 二十三 -> cardinal { integer: "23" } 
-        e.g. にじゅうさん　-> cardinal { integer: "23" }
+        e.g. にじゅうさん -> cardinal { integer: "23" }
 
     """
     
@@ -34,6 +34,8 @@ class CardinalFst(GraphFst):
         graph_digit = pynini.string_file(get_abs_path("data/numbers/digit.tsv"))
         graph_teen = pynini.string_file(get_abs_path("data/numbers/teen.tsv"))
         graph_ties = pynini.string_file(get_abs_path("data/numbers/ties.tsv"))
+
+        graph_all = (graph_ties + (graph_digit | pynutil.insert("0")) | graph_teen)
 
         hundred = pynutil.delete("百") | pynutil.delete("ひゃく") | pynutil.delete("びゃく") | pynutil.delete("ぴゃく")
         hundred_alt = pynini.cross("百", "1") | pynini.cross("ひゃく", "1") | pynini.cross("びゃく", "1") | pynini.cross("ぴゃく", "1")
@@ -97,7 +99,8 @@ class CardinalFst(GraphFst):
         graph_thousandtrillion_component = pynini.union(graph_thousand_component + trillion, pynutil.insert("0000"))
         graph_thousandtrillion_component += graph_hundredbillion_component
 
-        graph = pynini.union(graph_thousandtrillion_component, graphsenmanoku)
+        graph = pynini.union((graph_thousandtrillion_component | graphsenmanoku), (graph_hundredtrillion_component | graph_hyakumanoku), (graph_tentrillion_component | graph_zyumannoku), (graph_trillion_component | graph_thousandbillion_component),graph_hundredbillion_component,graph_tenbillion_component, graph_billion_component,graph_hundredmillion_component, graph_tenmillion_component, graph_million_component, graph_hundredthousand_component, graph_tenthousand_component, graph_thousand_component,graph_hundred_component, graph_all, graph_digit, graph_zero)
+        #graph = graph_thousandtrillion_component | graphsenmanoku
         leading_zero = pynutil.delete(pynini.closure("0")) + pynini.difference(NEMO_DIGIT, "0") + pynini.closure(NEMO_DIGIT)
         graph = (graph @ leading_zero | graph_zero)
         

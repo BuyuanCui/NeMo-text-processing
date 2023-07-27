@@ -13,22 +13,25 @@
 # limitations under the License.
 
 import pynini
-from nemo_text_processing.inverse_text_normalization.jp.graph_utils import GraphFst
+from nemo_text_processing.inverse_text_normalization.jp.graph_utils import (
+    NEMO_CHAR,
+    NEMO_SIGMA,
+    GraphFst,
+    delete_space,
+)
 from pynini.lib import pynutil
 
 
-class PunctuationFst(GraphFst):
+class WordFst(GraphFst):
     """
-    Finite state transducer for classifying punctuation
-        e.g. a, -> tokens { name: "a" } tokens { name: "," }
+    Finite state transducer for verbalizing plain tokens
+        e.g. tokens { name: "sleep" } -> sleep
     """
 
     def __init__(self):
-        super().__init__(name="punctuation", kind="classify")
-
-        s = "!#$%&'()*+,-./:;<=>?@^_`{|}~。，；：《》“”·~【】！？、‘’.<>-——_、。.「」『』‘`／・；’”“”‷･〔〕々〃ゝゞヽ〲〱〳〴〵ヾ〆，"
-        punct = pynini.union(*s)
-
-        graph = pynutil.insert('name: "') + punct + pynutil.insert('"')
+        super().__init__(name="word", kind="verbalize")
+        chars = pynini.closure(NEMO_CHAR - " ", 1)
+        char = pynutil.delete("name:") + delete_space + pynutil.delete('"') + chars + pynutil.delete('"')
+        graph = char @ pynini.cdrewrite(pynini.cross(u"\u00A0", " "), "", "", NEMO_SIGMA)
 
         self.fst = graph.optimize()
