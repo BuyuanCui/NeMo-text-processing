@@ -18,6 +18,7 @@ import os
 
 import pynini
 from nemo_text_processing.inverse_text_normalization.jp.taggers.cardinal import CardinalFst
+from nemo_text_processing.inverse_text_normalization.jp.taggers.ordinal import OrdinalFst
 from nemo_text_processing.inverse_text_normalization.jp.taggers.punctuation import PunctuationFst
 from nemo_text_processing.inverse_text_normalization.jp.taggers.whitelist import WhiteListFst
 from nemo_text_processing.inverse_text_normalization.jp.taggers.word import WordFst
@@ -65,6 +66,8 @@ class ClassifyFst(GraphFst):
             cardinal = CardinalFst()
             cardinal_graph = cardinal.fst
 
+            ordinal = OrdinalFst(cardinal)
+            ordinal_graph = ordinal.fst
             
             word_graph = WordFst().fst
             whitelist_graph = WhiteListFst(input_file=whitelist, input_case=input_case).fst
@@ -73,6 +76,7 @@ class ClassifyFst(GraphFst):
             classify = (
                 pynutil.add_weight(whitelist_graph, 1.01)
                 | pynutil.add_weight(cardinal_graph, 1.1)
+                | pynutil.add_weight(ordinal_graph, 1.1)
                 | pynutil.add_weight(word_graph, 100)
             )
 
