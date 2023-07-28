@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from nemo_text_processing.inverse_text_normalization.jp.verbalizers.cardinal import CardinalFst
+from nemo_text_processing.inverse_text_normalization.jp.verbalizers.ordinal import OrdinalFst
 from nemo_text_processing.inverse_text_normalization.jp.verbalizers.whitelist import WhiteListFst
 from nemo_text_processing.inverse_text_normalization.jp.graph_utils import GraphFst
 
@@ -29,9 +30,12 @@ class VerbalizeFst(GraphFst):
         super().__init__(name="verbalize", kind="verbalize")
         cardinal = CardinalFst()
         cardinal_graph = cardinal.fst
+        ordinal = OrdinalFst()
+        ordinal_graph = ordinal.fst
         whitelist_graph = WhiteListFst().fst
         graph = (
             cardinal_graph
+            | ordinal_graph
             | whitelist_graph
         )
         self.fst = graph
