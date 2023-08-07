@@ -17,25 +17,26 @@ import pynini
 from nemo_text_processing.inverse_text_normalization.jp.graph_utils import GraphFst
 from pynini.lib import pynutil
 
+
 class OrdinalFst(GraphFst):
     """
     Finite state transducer for classifying cardinals
         e.g. 第二十三 -> cardinal { morphsyntactic_feature: "第" integer: "23" } 
         e.g. 百番目 -> cardinal { integer: "100" morphsyntactic_feature:"番目" }
     """
-    
+
     def __init__(self, cardinal: GraphFst):
         super().__init__(name="ordinal", kind="classify")
-        
+
         cardinals = cardinal.just_cardinals
-        ordinals = pynini.accep("第") | pynini.accep("番目") 
-        
+        ordinals = pynini.accep("第") | pynini.accep("番目")
+
         ordinal_component = pynutil.insert("morphsyntactic_feature: \"") + ordinals + pynutil.insert("\"")
         integer_component = pynutil.insert("integer :\"") + cardinals + pynutil.insert("\"")
-        
-        final_graph = (pynini.closure(ordinal_component, 0, 1) + pynutil.insert(" ")) + integer_component + (pynutil.insert(" ") + pynini.closure(ordinal_component, 0, 1)) 
-        
+
+        final_graph = (ordinal_component + pynutil.insert(" ") + integer_component) | (
+            integer_component + pynutil.insert(" ") + ordinal_component
+        )
+
         final_graph = self.add_tokens(final_graph)
         self.fst = final_graph.optimize()
-        
-        

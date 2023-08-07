@@ -14,23 +14,28 @@
 
 
 import pynini
-from nemo_text_processing.inverse_text_normalization.jp.graph_utils import GraphFst, NEMO_DIGIT, NEMO_NOT_QUOTE
+from nemo_text_processing.inverse_text_normalization.jp.graph_utils import NEMO_DIGIT, NEMO_NOT_QUOTE, GraphFst
 from pynini.lib import pynutil
 
-class OrdinalFst_v2(GraphFst):
+
+class OrdinalFst(GraphFst):
     """
     Finite state transducer for classifying cardinals
         e.g. ordinal { morphsyntactic_feature: "第" integer: "23" }  -> 第23
         e.g. ordinal { integer: "100" morphsyntactic_feature: "番目" } -> 100番目
     """
-    
+
     def __init__(self):
         super().__init__(name="ordinal", kind="verbalize")
-        
+
         integer_component = pynutil.delete("integer: \"") + pynini.closure(NEMO_DIGIT) + pynutil.delete("\"")
-        ordinal_component = pynutil.delete("morphsyntactic_feature: \"") + pynini.closure(NEMO_NOT_QUOTE) + pynutil.delete("\"")
-     
-        final_graph = (ordinal_component + pynutil.delete(" ") + integer_component) | ( integer_component + pynutil.delete(" ") + ordinal_component) 
-        
+        ordinal_component = (
+            pynutil.delete("morphsyntactic_feature: \"") + pynini.closure(NEMO_NOT_QUOTE) + pynutil.delete("\"")
+        )
+
+        final_graph = (ordinal_component + pynutil.delete(" ") + integer_component) | (
+            integer_component + pynutil.delete(" ") + ordinal_component
+        )
+
         final_graph = self.delete_tokens(final_graph)
         self.fst = final_graph.optimize()

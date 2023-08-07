@@ -14,8 +14,14 @@
 
 
 import pynini
-from nemo_text_processing.inverse_text_normalization.jp.graph_utils import GraphFst, NEMO_DIGIT, delete_space, NEMO_NOT_QUOTE
+from nemo_text_processing.inverse_text_normalization.jp.graph_utils import (
+    NEMO_DIGIT,
+    NEMO_NOT_QUOTE,
+    GraphFst,
+    delete_space,
+)
 from pynini.lib import pynutil
+
 
 class CardinalFst(GraphFst):
     """
@@ -24,23 +30,34 @@ class CardinalFst(GraphFst):
     cardinal { negative: "-" integer: "23" } -> -23
     cardinal { positive: "+" integer: "23" } -> +23
     """
-    
+
     def __init__(self):
         super().__init__(name="cardinal", kind="verbalize")
-        
-        optional_sign = (pynutil.delete("negative:") | pynutil.delete("positive:"))+ delete_space+ pynutil.delete("\"")+ pynini.closure(NEMO_NOT_QUOTE) + pynutil.delete("\"")+ delete_space
-        
-        graph = (pynutil.delete("integer:") + delete_space + pynutil.delete("\"") + pynini.closure(NEMO_NOT_QUOTE, 1) + pynutil.delete("\""))
-        
+
+        optional_sign = (
+            (pynutil.delete("negative:") | pynutil.delete("positive:") | pynutil.delete("plus_minus:"))
+            + delete_space
+            + pynutil.delete("\"")
+            + pynini.closure(NEMO_NOT_QUOTE)
+            + pynutil.delete("\"")
+            + delete_space
+        )
+
+        graph = (
+            pynutil.delete("integer:")
+            + delete_space
+            + pynutil.delete("\"")
+            + pynini.closure(NEMO_NOT_QUOTE, 1)
+            + pynutil.delete("\"")
+        )
+
         exactly_three_digits = NEMO_DIGIT ** 3
         at_most_three_digits = pynini.closure(NEMO_DIGIT, 1, 3)
-        
-        group_by_threes = (at_most_three_digits + (pynutil.insert(",") + exactly_three_digits).closure())
+
+        group_by_threes = at_most_three_digits + (pynutil.insert(",") + exactly_three_digits).closure()
         graph = graph @ group_by_threes
-        
+
         final_graph = pynini.closure(optional_sign, 0, 1) + graph
-        
-            
+
         final_graph = self.delete_tokens(final_graph)
         self.fst = final_graph.optimize()
-

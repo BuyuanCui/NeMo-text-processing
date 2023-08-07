@@ -17,11 +17,6 @@ import logging
 import os
 
 import pynini
-from nemo_text_processing.inverse_text_normalization.jp.taggers.cardinal import CardinalFst
-from nemo_text_processing.inverse_text_normalization.jp.taggers.ordinal import OrdinalFst
-from nemo_text_processing.inverse_text_normalization.jp.taggers.punctuation import PunctuationFst
-from nemo_text_processing.inverse_text_normalization.jp.taggers.whitelist import WhiteListFst
-from nemo_text_processing.inverse_text_normalization.jp.taggers.word import WordFst
 from nemo_text_processing.inverse_text_normalization.jp.graph_utils import (
     INPUT_LOWER_CASED,
     GraphFst,
@@ -29,6 +24,13 @@ from nemo_text_processing.inverse_text_normalization.jp.graph_utils import (
     delete_space,
     generator_main,
 )
+from nemo_text_processing.inverse_text_normalization.jp.taggers.cardinal import CardinalFst
+from nemo_text_processing.inverse_text_normalization.jp.taggers.decimal import DecimalFst
+from nemo_text_processing.inverse_text_normalization.jp.taggers.fraction import FractionFst
+from nemo_text_processing.inverse_text_normalization.jp.taggers.ordinal import OrdinalFst
+from nemo_text_processing.inverse_text_normalization.jp.taggers.punctuation import PunctuationFst
+from nemo_text_processing.inverse_text_normalization.jp.taggers.whitelist import WhiteListFst
+from nemo_text_processing.inverse_text_normalization.jp.taggers.word import WordFst
 from pynini.lib import pynutil
 
 
@@ -68,15 +70,23 @@ class ClassifyFst(GraphFst):
 
             ordinal = OrdinalFst(cardinal)
             ordinal_graph = ordinal.fst
-            
+
+            decimal = DecimalFst(cardinal)
+            decimal_graph = decimal.fst
+
+            fraction = FractionFst(cardinal, decimal)
+            fraction_graph = fraction.fst
+
             word_graph = WordFst().fst
             whitelist_graph = WhiteListFst(input_file=whitelist, input_case=input_case).fst
             punct_graph = PunctuationFst().fst
-            
+
             classify = (
                 pynutil.add_weight(whitelist_graph, 1.01)
-                | pynutil.add_weight(cardinal_graph, 1.1)
+                | pynutil.add_weight(cardinal_graph, -1.1)
                 | pynutil.add_weight(ordinal_graph, 1.1)
+                | pynutil.add_weight(decimal_graph, 1.1)
+                | pynutil.add_weight(fraction_graph, 1.1)
                 | pynutil.add_weight(word_graph, 100)
             )
 
