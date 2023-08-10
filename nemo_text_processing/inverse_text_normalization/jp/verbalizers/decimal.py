@@ -45,11 +45,7 @@ class DecimalFst(GraphFst):
             + quantity_component
         )
 
-        graph_sign = (
-            (pynutil.delete("positive: \"") + pynini.closure(NEMO_NOT_QUOTE) + pynutil.delete("\""))
-            | (pynutil.delete("negative: \"") + pynini.closure(NEMO_NOT_QUOTE) + pynutil.delete("\""))
-            | (pynutil.delete("plus_minus: \"") + pynini.closure(NEMO_NOT_QUOTE) + pynutil.delete("\""))
-        )
+        graph_sign = (pynutil.delete("negative: \"") + pynini.closure(NEMO_NOT_QUOTE) + pynutil.delete("\""))
 
         graph = (
             graph_decimal

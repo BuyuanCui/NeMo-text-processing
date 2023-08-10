@@ -35,7 +35,7 @@ class CardinalFst(GraphFst):
         super().__init__(name="cardinal", kind="verbalize")
 
         optional_sign = (
-            (pynutil.delete("negative:") | pynutil.delete("positive:") | pynutil.delete("plus_minus:"))
+            pynutil.delete("negative:")
             + delete_space
             + pynutil.delete("\"")
             + pynini.closure(NEMO_NOT_QUOTE)
