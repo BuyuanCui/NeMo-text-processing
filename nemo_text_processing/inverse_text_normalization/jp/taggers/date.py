@@ -14,24 +14,46 @@
 
 
 import pynini
-from nemo_text_processing.inverse_text_normalization.jp.graph_utils import NEMO_DIGIT, GraphFst
+from nemo_text_processing.inverse_text_normalization.jp.graph_utils import GraphFst
 from nemo_text_processing.inverse_text_normalization.jp.utils import get_abs_path
-fr
+from pynini.lib import pynutil
 
 
 class DateFst(GraphFst):
     """
     Finite state transducer for classifying date, e.g., 
-    一日 -> 1日
-    五から九日 -> (5~9日)
-    一月 -> 1月
-    三から四月 -> 3~4月
-    一月一日 -> 1月1日
-    七十年代 -> 70年代
-    七十から八十年代 -> 70~80年代
-    七月中 -> 7月中
-    二十一世紀 -> 21世紀
-    二千九年 -> 2009年
-    月曜日 -> 
+    一日 -> 1日 date { day: "1" }
+    五から九日 -> (5~9日) date { day: "5~9" }
+    一月 -> 1月 date { month: "1" }
+    三から四月 -> 3~4月 date { month: "3~4" }
+    一月一日 -> 1月1日 date { month: "1" day: "1" }
+    七十年代 -> 70年代 date {era: "70年代" }
+    七十から八十年代 -> 70~80年代 date { era: "70~80年代" }
+    二十一世紀 -> 21世紀 date { era: " 21世紀" }
+    二千九年 -> 2009年 date { year: "2009" }
     """
-    
+
+    #二十三年二月二十五日土曜日~23年2月25日(土)
+    #一月一日月曜から三日水曜~1月1日(月)〜3日(水)
+    #七月五から九日月曜日から金曜日~7月5〜9日(月〜金)
+    #四年十月一日土曜日から令和五年一月六日金曜日~4年10月1日(土)から令和5年1月6日(金)
+
+
+    def __init__(self, cardinal: GraphFst):
+        super().__init__(name="date", kind="classify")
+
+        cardinal = cardinal.just_cardinals
+        week = pynini.string_file(get_abs_path("data/date.tsv"))
+
+        day_component = pynutil.insert("day: \"") + cardinal + pynini.closure((pynini.cross("から", "~") + cardinal), 0, 1) + pynutil.delete("日") + pynutil.insert("\"")
+        month_component = pynutil.insert("month: \"") + cardinal + pynini.closure((pynini.cross("から", "~") + cardinal), 0, 1) + pynutil.delete("月") + pynutil.insert("\"")
+        year_component = pynutil.insert("year: \"") + cardinal + pynini.closure((pynini.cross("から", "~") + cardinal), 0, 1) + pynutil.delete("年") + pynutil.insert("\"")
+        week_component = (pynutil.insert("weekday: \"(") + week + pynutil.insert(")\"")) | (pynutil.insert("weekday: \"(") + week + pynini.cross("から", "~") + week + pynutil.insert(")\""))
+        graph_era = pynutil.insert("era: \"") + cardinal + pynini.closure((pynini.cross("から", "~") + cardinal), 0, 1) + (pynini.accep("年代") | pynini.accep("世紀")) + pynutil.insert("\"")
+
+        graph_date = pynini.closure(year_component, 0, 1) + pynini.closure(month_component, 0, 1) + pynini.closure(day_component, 0, 1) + pynini.closure(week_component, 0, 1)
+
+        final_graph = graph_date | graph_era
+
+        final_graph = self.add_tokens(final_graph)
+        self.fst = final_graph.optimize()
